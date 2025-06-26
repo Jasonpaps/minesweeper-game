@@ -5,6 +5,7 @@ using UnityEngine.UI;
 public class GridManager : MonoBehaviour
 {
     public GameObject tilePrefab;
+    public RectTransform gridParent;
     public int width = 8;
     public int height = 8;
     public int mineCount = 10;
@@ -21,17 +22,25 @@ public class GridManager : MonoBehaviour
         tiles = new Tile[width, height];
         int minesPlaced = 0;
 
-        float tileSize = 50f; // Match your button size in pixels
+        float tileSize = 50f;
 
+        // 🧮 Step 1: Calculate total grid size
+        float totalWidth = width * tileSize;
+        float totalHeight = height * tileSize;
+
+        // 🎯 Step 2: Compute center offset
+        Vector2 offset = new Vector2(-totalWidth / 2 + tileSize / 2, totalHeight / 2 - tileSize / 2);
+
+        // 🔁 Step 3: Create tiles with offset
         for (int y = 0; y < height; y++)
         {
             for (int x = 0; x < width; x++)
             {
-                GameObject tileGO = Instantiate(tilePrefab, transform);
+                GameObject tileGO = Instantiate(tilePrefab, gridParent);
                 tileGO.name = $"Tile {x},{y}";
 
                 RectTransform rt = tileGO.GetComponent<RectTransform>();
-                rt.anchoredPosition = new Vector2(x * tileSize, -y * tileSize); // Y is negative to go down
+                rt.anchoredPosition = new Vector2(x * tileSize, -y * tileSize) + offset;
 
                 Tile tile = tileGO.GetComponent<Tile>();
                 tile.Init(x, y, this);
@@ -39,7 +48,7 @@ public class GridManager : MonoBehaviour
             }
         }
 
-        // Randomly assign mines
+        // Place mines randomly
         while (minesPlaced < mineCount)
         {
             int x = Random.Range(0, width);
@@ -55,8 +64,9 @@ public class GridManager : MonoBehaviour
 
         int nonMineTiles = (width * height) - mineCount;
         GameManager.Instance.SetTotalTiles(nonMineTiles);
-        GameManager.Instance.StartGame(mineCount); // Start timer and init mine counter
+        GameManager.Instance.StartGame(mineCount);
     }
+
 
     public int GetSurroundingMineCount(int x, int y)
     {
